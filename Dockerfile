@@ -18,6 +18,7 @@ ARG PYTHON_VERSION="3.12.3-0ubuntu2" # https://packages.ubuntu.com/noble/python3
 ARG PYTHON_IS_PYTHON3_VERSION="3.11.4-1" # https://packages.ubuntu.com/noble/python-is-python3
 ## Getting QT5 to work https://bio3d.colorado.edu/imod/doc/guide.html#UsingBashOnWin
 ARG MESA_COMMON_DEV_VERSION="24.0.5-1ubuntu1" # https://packages.ubuntu.com/noble/mesa-common-dev
+ARG MESA_UTILS_VERSION="9.0.0-2" # https://packages.ubuntu.com/noble/mesa-utils
 ARG LIBGLU1_MESA_DEV_VERSION="9.0.2-1.1build1" # https://packages.ubuntu.com/noble/libglu1-mesa-dev
 ARG LIBHARFBUZZ_BIN_VERSION="8.3.0-2build2" # https://packages.ubuntu.com/noble/libharfbuzz-bin
 ARG LIBICE6_VERSION="2:1.0.10-1build3" # https://packages.ubuntu.com/noble/libice6
@@ -37,6 +38,7 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
     python-is-python3=${PYTHON_IS_PYTHON3_VERSION} \
     # Getting QT5 to work https://bio3d.colorado.edu/imod/doc/guide.html#UsingBashOnWin
     mesa-common-dev=${MESA_COMMON_DEV_VERSION} \
+    mesa-utils=${MESA_UTILS_VERSION} \
     libglu1-mesa-dev=${LIBGLU1_MESA_DEV_VERSION} \
     libharfbuzz-bin=${LIBHARFBUZZ_BIN_VERSION} \
     libice6=${LIBICE6_VERSION} \
