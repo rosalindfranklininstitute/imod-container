@@ -15,6 +15,7 @@ ARG CURL_VERSION="8.5.0-2ubuntu10.6" # https://packages.ubuntu.com/noble/curl
 ARG DEFAULT_JRE_VERSION="2:1.21-75+exp1" # https://packages.ubuntu.com/noble/default-jre
 ARG TCSH_VERSION="6.24.10-4build1" # https://packages.ubuntu.com/noble/tcsh
 ARG PYTHON_VERSION="3.12.3-0ubuntu2" # https://packages.ubuntu.com/noble/python3
+ARG PYTHON_IS_PYTHON3_VERSION="3.11.4-1" # https://packages.ubuntu.com/noble/python-is-python3
 ## Getting QT5 to work https://bio3d.colorado.edu/imod/doc/guide.html#UsingBashOnWin
 ARG MESA_COMMON_DEV_VERSION="24.0.5-1ubuntu1" # https://packages.ubuntu.com/noble/mesa-common-dev
 ARG LIBGLU1_MESA_DEV_VERSION="9.0.2-1.1build1" # https://packages.ubuntu.com/noble/libglu1-mesa-dev
@@ -33,6 +34,7 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
     default-jre=${DEFAULT_JRE_VERSION} \
     tcsh=${TCSH_VERSION} \
     python3=${PYTHON_VERSION} \
+    python-is-python3=${PYTHON_IS_PYTHON3_VERSION} \
     # Getting QT5 to work https://bio3d.colorado.edu/imod/doc/guide.html#UsingBashOnWin
     mesa-common-dev=${MESA_COMMON_DEV_VERSION} \
     libglu1-mesa-dev=${LIBGLU1_MESA_DEV_VERSION} \
@@ -47,12 +49,11 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
     # Clean up and remove cache to reduce the image size.
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-#Download and install Imod
+
+# Download and install Imod
 RUN  curl -o imod_5.1.2.sh -L https://bio3d.colorado.edu/imod/AMD64-RHEL5/imod_5.1.2_RHEL8-64_CUDA12.0.sh \
      && sh imod_5.1.2.sh -y -dir /opt -debian \
      && rm imod_5.1.2.sh
 
 ENV PATH=$PATH:/opt/imod_5.1.2/bin
 ENV IMOD_DIR=/opt/imod_5.1.2
-
-CMD ["imod"]
