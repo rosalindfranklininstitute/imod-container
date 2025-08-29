@@ -43,7 +43,9 @@ ARG LIBXCB_XINERAMA0_VERSION="1.15-1ubuntu2" # https://packages.ubuntu.com/noble
 ARG LIBXCB_XINPUT0_VERSION="1.15-1ubuntu2" # https://packages.ubuntu.com/noble/libxcb-xinput0
 ARG LIBXCB_XFIXES0_VERSION="1.15-1ubuntu2" # https://packages.ubuntu.com/noble/libxcb-xfixes0
 ARG LIBXCB_SHAPE0_VERSION="1.15-1ubuntu2" # https://packages.ubuntu.com/noble/libxcb-shape0
-ARG VLC_VERSION="3.0.20-3build6" # https://packages.ubuntu.com/noble/vlc
+ARG LIBGL1_MESA_DRI_VERSION="25.0.7-0ubuntu0.24.04.1" # https://packages.ubuntu.com/noble-updates/libgl1-mesa-dri
+ARG LIBVULKAN1_VERSION="1.3.275.0-1build1" # https://packages.ubuntu.com/noble/libvulkan1
+ARG VULKAN_TOOLS_VERSION="1.3.275.0+dfsg1-1" # https://packages.ubuntu.com/noble/vulkan-tools
 # IMOD Requirments (https://bio3d.colorado.edu/imod/doc/guide.html#SettingUpLinux)
 RUN apt-get -y update && apt-get install -y --no-install-recommends \
     curl=${CURL_VERSION} \
@@ -78,7 +80,10 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
     libxcb-xinerama0=${LIBXCB_XINERAMA0_VERSION} \
     libxcb-xinput0=${LIBXCB_XINPUT0_VERSION} \
     libxcb-xfixes0=${LIBXCB_XFIXES0_VERSION} \
-    vlc=${VLC_VERSION} \
+    libgl1-mesa-dri=${LIBGL1_MESA_DRI_VERSION} \
+    libvulkan1=${LIBVULKAN1_VERSION} \
+    vulkan-tools=${VULKAN_TOOLS_VERSION}  \
+
     # Clean up and remove cache to reduce the image size.
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
