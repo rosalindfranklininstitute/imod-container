@@ -23,30 +23,16 @@ ARG LIBGLU1_MESA_DEV_VERSION="9.0.2-1.1build1" # https://packages.ubuntu.com/nob
 ARG LIBHARFBUZZ_BIN_VERSION="8.3.0-2build2" # https://packages.ubuntu.com/noble/libharfbuzz-bin
 ARG LIBICE6_VERSION="2:1.0.10-1build3" # https://packages.ubuntu.com/noble/libice6
 ARG LIBSM_DEV_VERSION="2:1.2.3-1build3" # https://packages.ubuntu.com/noble/libsm-dev
-ARG LIBXCB_XKB1_VERSION="1.15-1ubuntu2" # https://packages.ubuntu.com/noble/libxcb-xkb1
-ARG X11_UTILS_VERSION="7.7+6build2" # https://packages.ubuntu.com/noble/x11-utils
-ARG LIBOPENGL0_VERSION="1.7.0-1build1" # https://packages.ubuntu.com/noble/libopengl0
-ARG LIBGL1_VERSION="1.7.0-1build1" # https://packages.ubuntu.com/noble/libgl1
-ARG LIBGLX_MESA0_VERSION="25.0.7-0ubuntu0.24.04.1" # https://packages.ubuntu.com/noble-updates/libglx-mesa0
-ARG LIBGLIB2_0_0T64_VERSION="2.80.0-6ubuntu3.4" # https://packages.ubuntu.com/noble/libglib2.0-0t64
-ARG LIBFONTCONFIG1_VERSION="2.15.0-1.1ubuntu2" # https://packages.ubuntu.com/noble/libfontconfig1
-ARG LIBXRENDER1_VERSION="1:0.9.10-1.1build1" # https://packages.ubuntu.com/noble/libxrender1
-ARG LIBDBUS_1_3_VERSION="1.14.10-4ubuntu4" # https://packages.ubuntu.com/noble/libdbus-1-3
 ARG LIBXKBCOMMON_X11_0_VERSION="1.6.0-1build1" # https://packages.ubuntu.com/noble/libxkbcommon-x11-0
-ARG LIBXI6_VERSION="2:1.8.1-1build1" # https://packages.ubuntu.com/noble/libxi6
-ARG LIBXCB_ICCCM4_VERSION="0.4.1-1.1build3" # https://packages.ubuntu.com/noble/libxcb-icccm4
 ARG LIBXCB_IMAGE0_VERSION="0.4.0-2build1" # https://packages.ubuntu.com/noble/libxcb-image0
-ARG LIBXCB_KEYSYMS1_VERSION="0.4.0-1build4" # https://packages.ubuntu.com/noble/libxcb-keysyms1
-ARG LIBXCB_RANDR0_VERSION="1.15-1ubuntu2" # https://packages.ubuntu.com/noble/libxcb-randr0
 ARG LIBXCB_RENDER_UTIL0_VERSION="0.3.9-1build4" # https://packages.ubuntu.com/noble/libxcb-render-util0
-ARG LIBXCB_XINERAMA0_VERSION="1.15-1ubuntu2" # https://packages.ubuntu.com/noble/libxcb-xinerama0
-ARG LIBXCB_XINPUT0_VERSION="1.15-1ubuntu2" # https://packages.ubuntu.com/noble/libxcb-xinput0
-ARG LIBXCB_XFIXES0_VERSION="1.15-1ubuntu2" # https://packages.ubuntu.com/noble/libxcb-xfixes0
 ARG LIBXCB_SHAPE0_VERSION="1.15-1ubuntu2" # https://packages.ubuntu.com/noble/libxcb-shape0
-ARG LIBGL1_MESA_DRI_VERSION="25.0.7-0ubuntu0.24.04.1" # https://packages.ubuntu.com/noble-updates/libgl1-mesa-dri
-ARG LIBVULKAN1_VERSION="1.3.275.0-1build1" # https://packages.ubuntu.com/noble/libvulkan1
-ARG VULKAN_TOOLS_VERSION="1.3.275.0+dfsg1-1" # https://packages.ubuntu.com/noble/vulkan-tools
-# IMOD Requirments (https://bio3d.colorado.edu/imod/doc/guide.html#SettingUpLinux)
+ARG LIBXCB_XKB1_VERSION="1.15-1ubuntu2" # https://packages.ubuntu.com/noble/libxcb-xkb1
+## VirtualGL package to support QT5.
+ARG GNUPG_VERSION="2.4.4-2ubuntu17.3" # https://packages.ubuntu.com/noble-updates/gnupg
+ARG VIRTUALGL_VERSION="3.1.3-20250409" # https://packagecloud.io/dcommander/virtualgl
+
+
 RUN apt-get -y update && apt-get install -y --no-install-recommends \
     curl=${CURL_VERSION} \
     default-jre=${DEFAULT_JRE_VERSION} \
@@ -65,26 +51,19 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
     libxcb-render-util0=${LIBXCB_RENDER_UTIL0_VERSION} \
     libxcb-shape0=${LIBXCB_SHAPE0_VERSION} \
     libxcb-xkb1=${LIBXCB_XKB1_VERSION} \
-    x11-utils=${X11_UTILS_VERSION} \
-    libopengl0=${LIBOPENGL0_VERSION} \
-    libgl1=${LIBGL1_VERSION} \
-    libglx-mesa0=${LIBGLX_MESA0_VERSION} \
-    libglib2.0-0t64=${LIBGLIB2_0_0T64_VERSION} \
-    libfontconfig1=${LIBFONTCONFIG1_VERSION} \
-    libxrender1=${LIBXRENDER1_VERSION} \
-    libdbus-1-3=${LIBDBUS_1_3_VERSION} \
-    libxi6=${LIBXI6_VERSION} \
-    libxcb-icccm4=${LIBXCB_ICCCM4_VERSION} \
-    libxcb-keysyms1=${LIBXCB_KEYSYMS1_VERSION} \
-    libxcb-randr0=${LIBXCB_RANDR0_VERSION} \
-    libxcb-xinerama0=${LIBXCB_XINERAMA0_VERSION} \
-    libxcb-xinput0=${LIBXCB_XINPUT0_VERSION} \
-    libxcb-xfixes0=${LIBXCB_XFIXES0_VERSION} \
-    libgl1-mesa-dri=${LIBGL1_MESA_DRI_VERSION} \
-    libvulkan1=${LIBVULKAN1_VERSION} \
-    vulkan-tools=${VULKAN_TOOLS_VERSION}  \
-
     # Clean up and remove cache to reduce the image size.
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# GET VirtualGL from APT Package (https://packagecloud.io/dcommander/virtualgl/packages/any/any/virtualgl_3.1.3-20250409_amd64.deb) and install the progrmam.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gnupg=${GNUPG_VERSION} \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -s https://packagecloud.io/install/repositories/dcommander/virtualgl/script.deb.sh?any=true | bash \
+    && apt-get update && apt-get install -y --no-install-recommends \
+    virtualgl=${VIRTUALGL_VERSION} \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -92,6 +71,5 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
 RUN  curl -o imod_5.1.2.sh -L https://bio3d.colorado.edu/imod/AMD64-RHEL5/imod_5.1.2_RHEL8-64_CUDA12.0.sh \
      && sh imod_5.1.2.sh -y -dir /opt -debian \
      && rm imod_5.1.2.sh
-
 ENV PATH=$PATH:/opt/imod_5.1.2/bin
 ENV IMOD_DIR=/opt/imod_5.1.2
