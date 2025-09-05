@@ -1,31 +1,29 @@
 # imod-container
+
 A container for IMOD (5.1.2 with CUDA 12) 
 
 ## How to use 
 
-Please checkout the latest releases at [https://quay.io/repository/rosalindfranklininstitute/imod-container](https://quay.io/repository/rosalindfranklininstitute/imod-container):
+Please check out the latest releases at [https://quay.io/repository/rosalindfranklininstitute/imod-container](https://quay.io/repository/rosalindfranklininstitute/imod-container):
 
+Due to background processes, within the graphical user interface (GUI) of some programs, the best way to use IMOD with this container is to use the following command: 
 
-To use with apptainer please use the following command to launch 3dmod:
-
-```
-apptainer exec --nv docker://quay.io/rosalindfranklininstitute/imod-container 3dmod
-```
-
-To use with apptainer please use the following command to launch etomo:
+To use with Apptainer, please use the following command:
 
 ```
-apptainer exec --nv docker://quay.io/rosalindfranklininstitute/imod-container etomo
+apptainer shell --nv docker://quay.io/rosalindfranklininstitute/imod-container
 ```
 
-To use with apptainer please use the following command to launch bash:
+or 
 
 ```
 apptainer exec --nv docker://quay.io/rosalindfranklininstitute/imod-container bash
 ```
 
-To use with docker please use the following command:
+Once inside the container, the list of IMOD packages available can be found with 
 
 ```
-docker run quay.io/rosalindfranklininstitute/imod-container
+ls $IMOD_DIR/bin
 ```
+
+All of these packages that are shown via the `ls` command are available from the command line and can be run by typing their name, i.e., `3dmod` will launch 3dmod and `etomo` will launch etomo.
