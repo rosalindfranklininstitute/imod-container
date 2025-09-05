@@ -26,4 +26,5 @@ Once inside the container, the list of IMOD packages available can be found with
 ls $IMOD_DIR/bin
 ```
 
-All of these packages that are shown via the `ls` command are available from the command line and can be run by typing their name, i.e., `3dmod` will launch 3dmod and `etomo` will launch etomo.
+All of the packages that are shown via `ls $IMOD_DIR/bin` are available from the command line and can be run by typing their name, i.e., `3dmod` will launch 3dmod and `etomo` will launch etomo.
+
