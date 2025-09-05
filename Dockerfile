@@ -9,6 +9,9 @@ FROM ubuntu:${UBUNTU_VERSION}
 # Arguments
 ##########################################
 
+# Requirements for Bash
+ARG FILE_VERSION="1:5.45-3build1" # https://packages.ubuntu.com/noble/file
+
 # Requirements for IMOD
 ## IMOD Requirments (https://bio3d.colorado.edu/imod/doc/guide.html#SettingUpLinux)
 ARG CURL_VERSION="8.5.0-2ubuntu10.6" # https://packages.ubuntu.com/noble/curl
@@ -34,6 +37,7 @@ ARG VIRTUALGL_VERSION="3.1.3-20250409" # https://packagecloud.io/dcommander/virt
 
 
 RUN apt-get -y update && apt-get install -y --no-install-recommends \
+    file=${FILE_VERSION} \
     curl=${CURL_VERSION} \
     default-jre=${DEFAULT_JRE_VERSION} \
     tcsh=${TCSH_VERSION} \
@@ -60,8 +64,10 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg=${GNUPG_VERSION} \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -s https://packagecloud.io/install/repositories/dcommander/virtualgl/script.deb.sh?any=true | bash \
+    && rm -rf /var/lib/apt/lists/* 
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN curl -s https://packagecloud.io/install/repositories/dcommander/virtualgl/script.deb.sh?any=true | bash \
     && apt-get update && apt-get install -y --no-install-recommends \
     virtualgl=${VIRTUALGL_VERSION} \
     && apt-get clean \
@@ -71,5 +77,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN  curl -o imod_5.1.2.sh -L https://bio3d.colorado.edu/imod/AMD64-RHEL5/imod_5.1.2_RHEL8-64_CUDA12.0.sh \
      && sh imod_5.1.2.sh -y -dir /opt -debian \
      && rm imod_5.1.2.sh
+
 ENV PATH=$PATH:/opt/imod_5.1.2/bin
 ENV IMOD_DIR=/opt/imod_5.1.2
