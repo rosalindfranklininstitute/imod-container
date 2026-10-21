@@ -23,3 +23,4 @@ RUN cd /tmp \
 ENV IMOD_DIR=/opt/imod_${IMOD_VERSION}
 ENV PATH=$PATH:${IMOD_DIR}/bin
 ENV QT_X11_NO_MITSHM=1
+ENV QT_LOGGING_RULES="qt.qpa.xcb.warning=false" 
