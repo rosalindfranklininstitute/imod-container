@@ -1,82 +1,50 @@
 ARG UBUNTU_VERSION=24.04
+FROM ubuntu:${UBUNTU_VERSION} AS imod
 
+ARG UBUNTU_VERSION
+ARG IMOD_VERSION=5.1.13
+ARG CUDA_VERSION=12.0
+ARG RHEL_VERSION=8-64
+ARG IMOD_URL=https://bio3d.colorado.edu/imod/AMD64-RHEL5/imod_${IMOD_VERSION}_RHEL${RHEL_VERSION}_CUDA${CUDA_VERSION}.sh
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ=Europe/London
 
-FROM ubuntu:${UBUNTU_VERSION}
 
-##########################################
-# Arguments
-##########################################
-
-# Requirements for Bash
-ARG FILE_VERSION="1:5.45-3build1" # https://packages.ubuntu.com/noble/file
-
-# Requirements for IMOD
-## IMOD Requirments (https://bio3d.colorado.edu/imod/doc/guide.html#SettingUpLinux)
-ARG CURL_VERSION="8.5.0-2ubuntu10.6" # https://packages.ubuntu.com/noble/curl
-ARG DEFAULT_JRE_VERSION="2:1.21-75+exp1" # https://packages.ubuntu.com/noble/default-jre
-ARG TCSH_VERSION="6.24.10-4build1" # https://packages.ubuntu.com/noble/tcsh
-ARG PYTHON_VERSION="3.12.3-0ubuntu2" # https://packages.ubuntu.com/noble/python3
-ARG PYTHON_IS_PYTHON3_VERSION="3.11.4-1" # https://packages.ubuntu.com/noble/python-is-python3
-## Getting QT5 to work https://bio3d.colorado.edu/imod/doc/guide.html#UsingBashOnWin
-ARG MESA_COMMON_DEV_VERSION="24.0.5-1ubuntu1" # https://packages.ubuntu.com/noble/mesa-common-dev
-ARG MESA_UTILS_VERSION="9.0.0-2" # https://packages.ubuntu.com/noble/mesa-utils
-ARG LIBGLU1_MESA_DEV_VERSION="9.0.2-1.1build1" # https://packages.ubuntu.com/noble/libglu1-mesa-dev
-ARG LIBHARFBUZZ_BIN_VERSION="8.3.0-2build2" # https://packages.ubuntu.com/noble/libharfbuzz-bin
-ARG LIBICE6_VERSION="2:1.0.10-1build3" # https://packages.ubuntu.com/noble/libice6
-ARG LIBSM_DEV_VERSION="2:1.2.3-1build3" # https://packages.ubuntu.com/noble/libsm-dev
-ARG LIBXKBCOMMON_X11_0_VERSION="1.6.0-1build1" # https://packages.ubuntu.com/noble/libxkbcommon-x11-0
-ARG LIBXCB_IMAGE0_VERSION="0.4.0-2build1" # https://packages.ubuntu.com/noble/libxcb-image0
-ARG LIBXCB_RENDER_UTIL0_VERSION="0.3.9-1build4" # https://packages.ubuntu.com/noble/libxcb-render-util0
-ARG LIBXCB_SHAPE0_VERSION="1.15-1ubuntu2" # https://packages.ubuntu.com/noble/libxcb-shape0
-ARG LIBXCB_XKB1_VERSION="1.15-1ubuntu2" # https://packages.ubuntu.com/noble/libxcb-xkb1
-## VirtualGL package to support QT5.
-ARG GNUPG_VERSION="2.4.4-2ubuntu17.3" # https://packages.ubuntu.com/noble-updates/gnupg
-ARG VIRTUALGL_VERSION="3.1.3-20250409" # https://packagecloud.io/dcommander/virtualgl
-
-
-RUN apt-get -y update && apt-get install -y --no-install-recommends \
-    file=${FILE_VERSION} \
-    curl=${CURL_VERSION} \
-    default-jre=${DEFAULT_JRE_VERSION} \
-    tcsh=${TCSH_VERSION} \
-    python3=${PYTHON_VERSION} \
-    python-is-python3=${PYTHON_IS_PYTHON3_VERSION} \
-    # Getting QT5 to work https://bio3d.colorado.edu/imod/doc/guide.html#UsingBashOnWin
-    mesa-common-dev=${MESA_COMMON_DEV_VERSION} \
-    mesa-utils=${MESA_UTILS_VERSION} \
-    libglu1-mesa-dev=${LIBGLU1_MESA_DEV_VERSION} \
-    libharfbuzz-bin=${LIBHARFBUZZ_BIN_VERSION} \
-    libice6=${LIBICE6_VERSION} \
-    libsm-dev=${LIBSM_DEV_VERSION} \
-    libxkbcommon-x11-0=${LIBXKBCOMMON_X11_0_VERSION} \
-    libxcb-image0=${LIBXCB_IMAGE0_VERSION} \
-    libxcb-render-util0=${LIBXCB_RENDER_UTIL0_VERSION} \
-    libxcb-shape0=${LIBXCB_SHAPE0_VERSION} \
-    libxcb-xkb1=${LIBXCB_XKB1_VERSION} \
-    # Clean up and remove cache to reduce the image size.
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-
-# GET VirtualGL from APT Package (https://packagecloud.io/dcommander/virtualgl/packages/any/any/virtualgl_3.1.3-20250409_amd64.deb) and install the progrmam.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg=${GNUPG_VERSION} \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* 
+    ca-certificates file curl default-jre gdb tcsh python3 python-is-python3 \
+    locales \
+    mesa-common-dev mesa-utils libglu1-mesa-dev libharfbuzz-bin libice6 \
+    libsm-dev libxkbcommon-x11-0 libxcb-image0 libxcb-render-util0 \
+    libxcb-shape0 libxcb-xkb1 libgl1 libegl1 libxv1 \
+    && sed -i 's/^# *\(en_GB.UTF-8\)/\1/' /etc/locale.gen \
+    && locale-gen \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN curl -s https://packagecloud.io/install/repositories/dcommander/virtualgl/script.deb.sh?any=true | bash \
-    && apt-get update && apt-get install -y --no-install-recommends \
-    virtualgl=${VIRTUALGL_VERSION} \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN cd /tmp \
+    && curl -fsSL -O "${IMOD_URL}" \
+    && INSTALLER="$(basename "${IMOD_URL}")" \
+    && sh "${INSTALLER}" -y -dir /opt -debian \
+    && rm "${INSTALLER}"
 
-# Download and install Imod
-RUN  curl -o imod_5.1.2.sh -L https://bio3d.colorado.edu/imod/AMD64-RHEL5/imod_5.1.2_RHEL8-64_CUDA12.0.sh \
-     && sh imod_5.1.2.sh -y -dir /opt -debian \
-     && rm imod_5.1.2.sh
+ENV IMOD_DIR=/opt/imod_${IMOD_VERSION}
+ENV PATH=$PATH:${IMOD_DIR}/bin \
+    QT_X11_NO_MITSHM=1 \
+    QT_LOGGING_RULES="qt.qpa.xcb.warning=false" 
 
-ENV PATH=$PATH:/opt/imod_5.1.2/bin
-ENV IMOD_DIR=/opt/imod_5.1.2
+ARG IMAGE_VERSION="${IMOD_VERSION}-cuda${CUDA_VERSION}"
+ARG IMAGE_REVISION=""
+ARG IMAGE_CREATED=""
+
+LABEL org.opencontainers.image.title="RFI/CCP-volumeEM IMOD" \
+      org.opencontainers.image.description="Ubuntu container with IMOD (3dmod, etomo)" \
+      org.opencontainers.image.authors="The Rosalind Franklin Institute, The Collaborative Computational Project for Volume Electron Microscopy" \
+      org.opencontainers.image.source="https://github.com/rosalindfranklininstitute/imod-container" \
+      org.opencontainers.image.documentation="https://rosalindfranklininstitute.github.io/volume-em-container-documentation/software/imod/" \
+      org.opencontainers.image.licenses="GPL-2.0-only" \
+      org.opencontainers.image.base.name="docker.io/library/ubuntu:${UBUNTU_VERSION}" \
+      org.opencontainers.image.version="${IMAGE_VERSION}" \
+      org.opencontainers.image.revision="${IMAGE_REVISION}" \
+      org.opencontainers.image.created="${IMAGE_CREATED}" \
+      uk.ac.rfi.imod.version="${IMOD_VERSION}" \
+      uk.ac.rfi.imod.cuda.version="${CUDA_VERSION}" \
+      uk.ac.rfi.imod.rhel.version="${RHEL_VERSION}"
