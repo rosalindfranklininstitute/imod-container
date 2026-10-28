@@ -71,7 +71,7 @@ jobs:
             IMAGE_CREATED=${{ steps.time.outputs.created }}
 
       - name: Build and push IMOD+VirtualGL image
-        id: build
+        id: build-vgl
         uses: docker/build-push-action@v7
         with:
           context: .
