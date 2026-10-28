@@ -23,6 +23,10 @@ on:
         description: Also set the latest tag
         type: boolean
         default: false
+      virtualgl_version:
+        description: VirtualGL release (e.g. 3.1.5)
+        type: string
+        default: '3.1.5'
 
 permissions:
   contents: read
@@ -51,6 +55,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+          file: Dockerfile
           push: true
           provenance: true
           tags: |
@@ -62,5 +67,24 @@ jobs:
             RHEL_VERSION=${{ inputs.rhel_version }}
             ${{ inputs.imod_url && format('IMOD_URL={0}', inputs.imod_url) || '' }}
             IMAGE_VERSION=${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}
+            IMAGE_REVISION=${{ github.sha }}
+            IMAGE_CREATED=${{ steps.time.outputs.created }}
+
+      - name: Build and push IMOD+VirtualGL image
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile-vgl
+          push: true
+          provenance: true
+          tags: |
+            quay.io/rosalindfranklininstitute/imod-container:${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}-vgl
+            ${{ inputs.latest && 'quay.io/rosalindfranklininstitute/imod-container:latest-vgl' || '' }}
+          build-args: |
+            BASE_IMAGE=quay.io/rosalindfranklininstitute/imod-container@${{ steps.build.outputs.digest }}
+            VIRUTALGL_VERSON=${{ inputs.virtualgl_version }}
+            ${{ inputs.imod_url && format('IMOD_URL={0}', inputs.imod_url) || '' }}
+            IMAGE_VERSION=${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}-vgl
             IMAGE_REVISION=${{ github.sha }}
             IMAGE_CREATED=${{ steps.time.outputs.created }}
