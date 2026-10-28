@@ -1,5 +1,7 @@
-FROM ubuntu:24.04 as imod
+ARG UBUNTU_VERSION=24.04
+FROM ubuntu:${UBUNTU_VERSION} AS imod
 
+ARG UBUNTU_VERSION
 ARG IMOD_VERSION=5.1.13
 ARG CUDA_VERSION=12.0
 ARG RHEL_VERSION=8-64
@@ -18,19 +20,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && locale-gen \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-
-RUN curl -fsSL -o /tmp/imod.sh "${IMOD_URL}" \
-    && sh /tmp/imod.sh -y -dir /opt -debian \
-    && rm /tmp/imod.sh
+RUN cd /tmp \
+    && curl -fsSL -O "${IMOD_URL}" \
+    && INSTALLER="$(basename "${IMOD_URL}")" \
+    && sh "${INSTALLER}" -y -dir /opt -debian \
+    && rm "${INSTALLER}"
 
 ENV IMOD_DIR=/opt/imod_${IMOD_VERSION}
-ENV PATH=$PATH:${IMOD_DIR}/bin
-ENV QT_X11_NO_MITSHM=1
-ENV QT_LOGGING_RULES="qt.qpa.xcb.warning=false" 
+ENV PATH=$PATH:${IMOD_DIR}/bin \
+    QT_X11_NO_MITSHM=1 \
+    QT_LOGGING_RULES="qt.qpa.xcb.warning=false" 
 
-LABEL org.opencontainers.image.title="RFI IMOD"
-LABEL org.opencontainers.image.description="Ubuntu container with IMOD (3dmod, etomo)"
-LABEL org.opencontainers.image.version="RHEL${RHEL_VERSION}_IMOD${IMOD_VERSION}_CUDA${CUDA_VERSION}"
-LABEL org.opencontainers.image.authors="The Rosalind Franklin Institute"
-LABEL org.opencontainers.image.source="https://github.com/rosalindfranklininstitute/imod-container"
-LABEL org.opencontainers.image.licenses="GPL-2.0"
+ARG IMAGE_VERSION="${IMOD_VERSION}-cuda${CUDA_VERSION}"
+ARG IMAGE_REVISION=""
+ARG IMAGE_CREATED=""
+
+LABEL org.opencontainers.image.title="RFI/CCP-volumeEM IMOD" \
+      org.opencontainers.image.description="Ubuntu container with IMOD (3dmod, etomo)" \
+      org.opencontainers.image.authors="The Rosalind Franklin Institute, The Collaborative Computational Project for Volume Electron Microscopy" \
+      org.opencontainers.image.source="https://github.com/rosalindfranklininstitute/imod-container" \
+      org.opencontainers.image.documentation="https://rosalindfranklininstitute.github.io/volume-em-container-documentation/software/imod/" \
+      org.opencontainers.image.licenses="GPL-2.0-only" \
+      org.opencontainers.image.base.name="docker.io/library/ubuntu:${UBUNTU_VERSION}" \
+      org.opencontainers.image.version="${IMAGE_VERSION}" \
+      org.opencontainers.image.revision="${IMAGE_REVISION}" \
+      org.opencontainers.image.created="${IMAGE_CREATED}" \
+      uk.ac.rfi.imod.version="${IMOD_VERSION}" \
+      uk.ac.rfi.imod.cuda.version="${CUDA_VERSION}" \
+      uk.ac.rfi.imod.rhel.version="${RHEL_VERSION}"
