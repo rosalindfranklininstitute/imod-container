@@ -4,35 +4,33 @@ on:
   workflow_dispatch:
     inputs:
       imod_version:
-        description: IMOD release (e.g. 5.1.13)
+        description: IMOD release (e.g. 5.1.13) - to match imod_url
         type: string
         required: true
       cuda_version:
-        description: CUDA version (e.g. 12.0)
+        description: CUDA version (e.g. 12.0) - to match imod_url
         type: string
         required: true
-      rhel_version:
-        description: RHEL version string (e.g. 8-64)
+      imod_url: 
+        description: URL of RHEL AMD64 IMOD installer from IMOD download page
         type: string
         required: true
-      imod_url:
-        description: Optional full installer URL, overrides the one built from the versions
-        type: string
-        required: false
-      latest:
-        description: Also set the latest tag
-        type: boolean
-        default: false
       virtualgl_version:
-        description: VirtualGL release (e.g. 3.1.5)
+        description: VirtualGL release for -vgl tag (e.g. 3.1.5)
         type: string
         default: '3.1.5'
-
-permissions:
-  contents: read
+      latest:
+        description: Set latest and latest-vgl tags
+        type: boolean
+        default: false
+env:
+  IMAGE: quay.io/rosalindfranklininstitute/napari-clemreg-empanada
 
 jobs:
   build-container:
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -50,6 +48,8 @@ jobs:
 
       - uses: docker/setup-buildx-action@v4
 
+      - uses: sigstore/cosign-installer@v4.1.0
+
       - name: Build and push IMOD image
         id: build
         uses: docker/build-push-action@v7
@@ -58,33 +58,55 @@ jobs:
           file: Dockerfile
           push: true
           provenance: true
+          sbom: true
           tags: |
-            quay.io/rosalindfranklininstitute/imod-container:${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}
+            ${{ env.IMAGE }}:${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}
             ${{ inputs.latest && 'quay.io/rosalindfranklininstitute/imod-container:latest' || '' }}
           build-args: |
             IMOD_VERSION=${{ inputs.imod_version }}
             CUDA_VERSION=${{ inputs.cuda_version }}
-            RHEL_VERSION=${{ inputs.rhel_version }}
             ${{ inputs.imod_url && format('IMOD_URL={0}', inputs.imod_url) || '' }}
             IMAGE_VERSION=${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}
             IMAGE_REVISION=${{ github.sha }}
             IMAGE_CREATED=${{ steps.time.outputs.created }}
 
       - name: Build and push IMOD+VirtualGL image
-        id: build
+        id: build-vgl
         uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile-vgl
           push: true
           provenance: true
+          sbom: true
           tags: |
-            quay.io/rosalindfranklininstitute/imod-container:${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}-vgl
+            ${{ env.image }}:${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}-vgl
             ${{ inputs.latest && 'quay.io/rosalindfranklininstitute/imod-container:latest-vgl' || '' }}
           build-args: |
             BASE_IMAGE=quay.io/rosalindfranklininstitute/imod-container@${{ steps.build.outputs.digest }}
-            VIRUTALGL_VERSON=${{ inputs.virtualgl_version }}
+            VIRTUALGL_VERSON=${{ inputs.virtualgl_version }}
             ${{ inputs.imod_url && format('IMOD_URL={0}', inputs.imod_url) || '' }}
             IMAGE_VERSION=${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}-vgl
             IMAGE_REVISION=${{ github.sha }}
             IMAGE_CREATED=${{ steps.time.outputs.created }}
+
+      - name: Sign images
+        env:
+          DIGEST_IMOD: ${{ steps.build.outputs.digest }}
+          DIGEST_VGL: ${{ steps.build-vgl.outputs.digest }}
+        run: |
+          cosign sign --yes "quay.io/rosalindfranklininstitute/imod-container@${DIGEST_IMOD}"
+          cosign sign --yes "quay.io/rosalindfranklininstitute/imod-container@${DIGEST_VGL}"
+
+      - name: Verify signatures
+        env:
+          IMAGE: quay.io/rosalindfranklininstitute/imod-container
+          DIGEST_IMOD: ${{ steps.build.outputs.digest }}
+          DIGEST_VGL: ${{ steps.build-vgl.outputs.digest }}
+          IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/build-publish.yml@${{ github.ref }}
+        run: |
+          for d in "${DIGEST_IMOD}" "${DIGEST_VGL}"; do
+            cosign verify "${IMAGE}@${d}" \
+              --certificate-identity "${IDENTITY}" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com
+          done

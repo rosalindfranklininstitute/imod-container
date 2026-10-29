@@ -4,8 +4,8 @@ FROM ubuntu:${UBUNTU_VERSION} AS imod
 ARG UBUNTU_VERSION
 ARG IMOD_VERSION=5.1.13
 ARG CUDA_VERSION=12.0
-ARG RHEL_VERSION=8-64
-ARG IMOD_URL=https://bio3d.colorado.edu/imod/AMD64-RHEL5/imod_${IMOD_VERSION}_RHEL${RHEL_VERSION}_CUDA${CUDA_VERSION}.sh
+# IMOD_URL required and should agree with IMOD_VERSION (enforced) and CUDA_VERSION (not enforced)
+ARG IMOD_URL
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ=Europe/London
 
@@ -21,10 +21,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN cd /tmp \
-    && curl -fsSL -O "${IMOD_URL}" \
+    && curl -fsSL -O "${IMOD_URL:?IMOD_URL build arg is required}" \
     && INSTALLER="$(basename "${IMOD_URL}")" \
     && sh "${INSTALLER}" -y -dir /opt -debian \
-    && rm "${INSTALLER}"
+    && rm "${INSTALLER}" \
+    && test -x "/opt/imod_${IMOD_VERSION}/bin/3dmod"
 
 ENV IMOD_DIR=/opt/imod_${IMOD_VERSION}
 ENV PATH=$PATH:${IMOD_DIR}/bin \
@@ -47,4 +48,4 @@ LABEL org.opencontainers.image.title="RFI/CCP-volumeEM IMOD" \
       org.opencontainers.image.created="${IMAGE_CREATED}" \
       uk.ac.rfi.imod.version="${IMOD_VERSION}" \
       uk.ac.rfi.imod.cuda.version="${CUDA_VERSION}" \
-      uk.ac.rfi.imod.rhel.version="${RHEL_VERSION}"
+      uk.ac.rfi.imod.installer.url="${IMOD_URL}"
