@@ -62,6 +62,7 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}
             ${{ inputs.latest && format('{0}:latest', env.IMAGE) || '' }}
+          build-args: |
             IMOD_VERSION=${{ inputs.imod_version }}
             CUDA_VERSION=${{ inputs.cuda_version }}
             IMOD_URL=${{ inputs.imod_url }}
