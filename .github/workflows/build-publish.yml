@@ -24,7 +24,7 @@ on:
         type: boolean
         default: false
 env:
-  IMAGE: quay.io/rosalindfranklininstitute/napari-clemreg-empanada
+  IMAGE: quay.io/rosalindfranklininstitute/imod-container
 
 jobs:
   build-container:
