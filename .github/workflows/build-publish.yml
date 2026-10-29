@@ -61,11 +61,10 @@ jobs:
           sbom: true
           tags: |
             ${{ env.IMAGE }}:${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}
-            ${{ inputs.latest && 'quay.io/rosalindfranklininstitute/imod-container:latest' || '' }}
-          build-args: |
+            ${{ inputs.latest && format('{0}:latest', env.IMAGE) || '' }}
             IMOD_VERSION=${{ inputs.imod_version }}
             CUDA_VERSION=${{ inputs.cuda_version }}
-            ${{ inputs.imod_url && format('IMOD_URL={0}', inputs.imod_url) || '' }}
+            IMOD_URL=${{ inputs.imod_url }}
             IMAGE_VERSION=${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}
             IMAGE_REVISION=${{ github.sha }}
             IMAGE_CREATED=${{ steps.time.outputs.created }}
@@ -80,12 +79,11 @@ jobs:
           provenance: true
           sbom: true
           tags: |
-            ${{ env.image }}:${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}-vgl
-            ${{ inputs.latest && 'quay.io/rosalindfranklininstitute/imod-container:latest-vgl' || '' }}
+            ${{ env.IMAGE }}:${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}-vgl
+            ${{ inputs.latest && format('{0}:latest-vgl', env.IMAGE) || '' }}
           build-args: |
-            BASE_IMAGE=quay.io/rosalindfranklininstitute/imod-container@${{ steps.build.outputs.digest }}
-            VIRTUALGL_VERSON=${{ inputs.virtualgl_version }}
-            ${{ inputs.imod_url && format('IMOD_URL={0}', inputs.imod_url) || '' }}
+            BASE_IMAGE=${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+            VIRTUALGL_VERSION=${{ inputs.virtualgl_version }}
             IMAGE_VERSION=${{ inputs.imod_version }}-cuda${{ inputs.cuda_version }}-vgl
             IMAGE_REVISION=${{ github.sha }}
             IMAGE_CREATED=${{ steps.time.outputs.created }}
@@ -95,18 +93,17 @@ jobs:
           DIGEST_IMOD: ${{ steps.build.outputs.digest }}
           DIGEST_VGL: ${{ steps.build-vgl.outputs.digest }}
         run: |
-          cosign sign --yes "quay.io/rosalindfranklininstitute/imod-container@${DIGEST_IMOD}"
-          cosign sign --yes "quay.io/rosalindfranklininstitute/imod-container@${DIGEST_VGL}"
+          cosign sign --yes "${{ env.IMAGE }}@${DIGEST_IMOD}"
+          cosign sign --yes "${{ env.IMAGE }}@${DIGEST_VGL}"
 
       - name: Verify signatures
         env:
-          IMAGE: quay.io/rosalindfranklininstitute/imod-container
           DIGEST_IMOD: ${{ steps.build.outputs.digest }}
           DIGEST_VGL: ${{ steps.build-vgl.outputs.digest }}
           IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/build-publish.yml@${{ github.ref }}
         run: |
           for d in "${DIGEST_IMOD}" "${DIGEST_VGL}"; do
-            cosign verify "${IMAGE}@${d}" \
+            cosign verify "${{ env.IMAGE }}@${d}" \
               --certificate-identity "${IDENTITY}" \
               --certificate-oidc-issuer https://token.actions.githubusercontent.com
           done
